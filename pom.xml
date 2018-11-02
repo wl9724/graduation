@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<!-- POM的版本 -->
+    <modelVersion>4.0.0</modelVersion>
+	<!-- 项目的唯一标识符 -->
+	<groupId>com.dlmu.graduation</groupId>
+	<!-- 项目的名称 -->
+	<artifactId>graduation</artifactId>
+	<!-- 项目的版本号 -->
+	<version>${revision}</version>
+	<!-- 项目的打包类型 -->
+	<packaging>war</packaging>
+	<!-- 项目名称 -->
+	<name>graduation</name>
+	<!-- 项目描述 -->
+	<description>My Test Project</description>
+
+	<!-- 属性值设定，可在整个POM文件中作为定数使用
+		调用格式：${property_name}
+	 -->
+	<properties>
+		<!-- 固定属性设置 -->
+		<!-- 指定JDK版本 -->
+		<java.version>1.8</java.version>
+		<!-- 文件拷贝时的编码 替代maven-resources-plugin的encoding配置 -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<!-- 编译时的编码 替代maven-compiler-plugin的encoding配置 -->
+             <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+
+		<!-- 自定义属性：属性名称全部都是自定义 -->
+		<revision>dev-SNAPSHOT</revision>
+		<spring.version>4.3.18.RELEASE</spring.version>
+		<lombok.version>1.18.0</lombok.version>
+		<jackson.dataformat.xml.version>2.9.6</jackson.dataformat.xml.version>
+		<mybatis.version>3.4.6</mybatis.version>
+		<mybatis.spring.version>1.3.2</mybatis.spring.version>
+		<servlet.api.version>2.5</servlet.api.version>
+		<org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
+		<logback.version>1.2.3</logback.version>
+		<junit.jupiter.version>5.1.0</junit.jupiter.version>
+		<junit.platform.version>1.1.0</junit.platform.version>
+		<jacoco.version>0.8.1</jacoco.version>
+		<tomcat.version>8.5.20</tomcat.version>
+		<sonar.coverage.exclusions>
+			**/beans/**,
+			**/common/**,
+			**/config/**,
+			**/controller/**,
+			**/enums/**,
+			**/exceptions/**,
+			**/service/**,
+			**/samples/**,
+		</sonar.coverage.exclusions>
+
+	</properties>
+
+	<dependencies>
+		<!-- springmvc的api及依赖 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<!-- spring上下文依赖 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring.version}</version>
+			<!-- maven工程管理jar的好处就是,可以将某个jar包依赖的jar包一同加载。
+				但是也会带来一些问题, 如spring-context, 其默认依赖commons-logging。
+				但是本项目中想要使用 slf4j 处理日志, 因此可以使用 下方的 exclusion 节点将依赖
+				的commons-logging的jar包排除。		
+			 -->
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- spring上下文读写支持的依赖 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		
+		<!-- 与切面相关 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aspects</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+
+		<!-- spring 对象关系映射 依赖 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+
+		<!-- mybatis核心API依赖 -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>${mybatis.version}</version>
+		</dependency>
+
+		<!-- mybatis-spring整合核心API依赖 -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>${mybatis.spring.version}</version>
+		</dependency>
+
+		<!-- spring集成junit测试的依赖 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${spring.version}</version>
+			<!-- 声明映射库的时机：是测试  -->
+			<scope>test</scope>
+		</dependency>
+
+		<!-- spring 对 jstl支持的依赖 -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+		<!-- Servlet API的依赖 -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>${servlet.api.version}</version>
+			<!-- 
+				scope默认：compile,意味 在整个容器 编译,运行,测试阶段都需要依赖上述jar。
+				  非默认：provided,代表该容器在运行阶段会提供上述jar的依赖, 而上述jar只需要在编译,测试阶段提供即可。
+						 其实就是Tomcat会在运行阶段提供Servlet-api,而在编译,测试阶段不会, 因此我们又在该阶段依赖
+						了该api,但是在运行阶段又会与Tomcat提供的api发生冲突, 因此特此声明。
+				  3.runtime：在测试和运行时有效 
+				  4.test:只在测试时有效 
+				  5.system:在编译和测试时有效，与本机系统关联，可移植性差
+			 -->
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- dbcp连接池所需要的依赖。
+			dbcp和dbcp2在版本上的变动是对不同jdk的支持不一样,pool2仅支持更高版本。
+			而且两者配置方式发生些许变化。
+		 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-dbcp2</artifactId>
+			<version>2.4.0</version>
+		</dependency>
+		<!--对于连接池的支持
+			pool和pool2在版本上的变动是对不同jdk的支持不一样,pool2仅支持更高版本。
+			而且两者配置方式发生些许变化。
+		-->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+			<version>2.6.0</version>
+		</dependency>
+
+		<!-- 
+			MySQL连接Java所需的核心依赖, 与上述两个连接池的依赖互相支持。
+		 -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.11</version>
+		</dependency>
+
+		<!-- Hibernate validation通过注解验证的依赖。
+			 其实现了validation-api中的规范。
+		 -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-validator</artifactId>
+			<version>6.0.10.Final</version>
+		</dependency>
+
+		<!-- Hibernate validation 所需要的包, 下列api中定义了hibernate-validator所需要的接口和规范 -->
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>2.0.1.Final</version>
+		</dependency>
+
+		<!-- Hibernate validation 所需要的el依赖。 -->
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.el</artifactId>
+			<version>3.0.1-b10</version>
+		</dependency>
+		<!-- other third-party jars -->
+		<!--
+			mapstruct:coding中两个实体之间互相转换时, car -> carFormBean等,
+					  帮助自动转换赋值(自动get/set,其中可能使用注解进行属性映射)
+		 -->
+		 <!-- 提供对jdk8的支持 -->
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct-jdk8</artifactId>
+			<version>${org.mapstruct.version}</version>
+		</dependency>
+
+		<!-- 
+			lombok:自动生成get,set,toString(),构造器等..,后期取代autowired自动装配
+		 -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- jackson插件的依赖,可转化pojo和xml,具体应用现在不明 -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
+			<version>${jackson.dataformat.xml.version}</version>
+		</dependency>
+
+		<!-- logback jars 用来替代log4j或common-loggings进行日志处理 -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>${logback.version}</version>
+			<!-- 不仅仅测试中需要生成日志。 -->
+			<!-- <scope>test</scope> -->
+		</dependency>
+		<!-- logback 与spring整合支持 -->
+		<dependency>
+			<groupId>org.logback-extensions</groupId>
+			<artifactId>logback-ext-spring</artifactId>
+			<version>0.1.5</version>
+		</dependency>
+
+		<!-- JUnit 5 jars 
+			对于JUnit5 测试,注解等支持
+		-->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>${junit.platform.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- mockito单元测试所需核心依赖 -->
+		<dependency>
+		  <groupId>org.mockito</groupId>
+		  <artifactId>mockito-core</artifactId>
+		  <version>2.21.0</version>
+		</dependency>
+
+
+	</dependencies>
+
+	<build>
+
+		<!--重点： 
+			 配置让maven进行加载的资源,
+			 可以设置让maven主动加载指定目录下的资源,并将其内容转化为可使用的value
+			 maven的加载资源文件的规则
+			    1.仅会将src/main/java中的java文件加载并编译到target
+				  因此,如果想把一些放置在src/main/java目录的xml,properties等资源文件
+			      在编译时放入target目录下,就需要使用resources节点主动去加载指定目录的指定文件。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+				2.会将src/main/resources中的java和一些其他文件如xml进行加载并放置target。
+				  然而,其并不会将加载过的这些文件中的一些变量提炼出来,
+				  因此,像一些properties文件中的属性值想要提炼出来通过${}等手段使用时,就可以
+				  使用filtering=true的方式,主动去过滤这类文件。
+		 -->
+		<resources>
+
+			<resource>
+				<!-- 设置是否过滤指定目录
+					 过滤的作用就是将,properties文件中的属性值,
+					转化为想要引入该值得${}表达式中的数据
+				 -->
+				<filtering>true</filtering>
+				<!-- 指定要过滤的目录 -->
+				<directory>${basedir}/src/main/resources</directory>
+				<!-- 指定要过滤的,上述目录下的文件类别 -->
+				<includes>
+					<!-- **代表 不限数量的字符和目录,
+						 *代表 不限数量的字符。
+					 -->
+					<include>**/application*.properties</include>
+					<include>**/application*.yml</include>
+					<include>**/application*.yaml</include>
+				</includes>
+			</resource>
+			<!-- 指定除上述文件要过滤,其他文件都不过滤(上面讲了,过滤的目的是将这类文件内的变量提炼,并使用${}能够引用) -->
+			<resource>
+				<directory>${basedir}/src/main/resources</directory>
+				<excludes>
+					<exclude>**/application*.yml</exclude>
+					<exclude>**/application*.yaml</exclude>
+					<exclude>**/application*.properties</exclude>
+				</excludes>
+			</resource>
+
+		</resources>
+
+		
+		<plugins>
+			<!-- 打包插件,打包时定位web.xml所在目录 -->
+			<plugin>
+				<!-- ${basedir是默认根目录的意思} -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.2.1</version>
+				<!-- 通过下面节点配置打包jar包时,索引web.xml的目录 -->
+				<configuration>
+					<webXml>${basedir}/src/main/webapp/WEB-INF/web.xml</webXml>
+				</configuration>
+			</plugin>
+		
+
+
+			<!-- 资源文件控制插件的配置 (因为已经通过另一种方式解决,所以下面的插件被注掉了)
+					这里配置的是：当执行validate或包含了validate的phase在被执行的时候
+					需要copy指定的checkstyle文件到构建输出目录下 
+				注意：其实并不是因为放置在resources目录下的checkstyle.xml无法在编译时被copy到target目录,
+					而是因为, checkstyle本身的配置中,如果不特意去声名上target的哪个目录
+					去加载checkstyle.xml文件的话,其默认会上target的根目录下找该配置文件。
+					因此加入以下的资源控制插件目的就是想要让maven工程在编译时,将checkstyle.xml
+					文件放置在target根目录。
+				另一种解决方式： 就是直接上checkstyle插件配置中去更改其加载配置文件时索引的目录。
+								通过<configLocation>节点更改。(maven.apache.org官网详细)
+								
+			-->
+			<!-- <plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.0.2</version>
+				配置执行内容
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						1.执行资源控制的时机：validate(在checkstyle验证时)
+						<phase>validate</phase>
+						2.当上述时机出现后,触发的执行内容：copy-resoures,复制资源
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						3.针对上面要进行的复制进行的配置
+						<configuration>
+							4.复制时的字符集
+							<encoding>UTF-8</encoding>
+							5.复制后,输出的目录:project.build.directory:代表编译目录target的根目录
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							6.配置要赋值的资源所在位置和资源。
+							<resources>
+								<resource>
+									7.定位要复制的资源所在目录
+									<directory>${basedir}/src/main/resources/</directory>
+									8.指定该目录下要复制的资源。
+									<includes>
+										<include>google_checkstyle.xml</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin> -->
+
+			<!-- 编译插件的配置，配置了所使用的JAVA版本
+				编译插件,对比maven本身的编译功能,多提供了例如,对测试类的编译,
+				和通过mvn compiler:help -D detail=true -D goal=<goal-name>指令
+				输出的编译时的详细参数。 详细见maven官网。
+			-->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.7.0</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
+			</plugin>
+
+			<!-- 测试插件，在执行mvn test的时,绑定在该阶段的插件
+				该插件配置了JUnit5进行测试时的一些配置和行为。
+				该插件可以根据JUnit测试的结果,生成相应的xml文件,以查看测试报告。
+				并且可以在使用另一些插件,针对该测试结果生成的xml生成可视化的html等。
+			-->
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.19.1</version>
+				<configuration>
+					<!-- 配置,针对于哪个类生成测试报告 -->
+					<includes>
+						<include>**/*Test*.java</include>
+						<!-- 
+							<include>**/Test*.java</include>
+							<include>**/*Test.java</include>
+							<include>**/*Tests.java</include>
+							<include>**/*TestCase.java</include>
+						-->
+					</includes>
+					<properties>
+						<!-- includeTags和excludeTags可以过滤某些想要测试或不想要测试的类。
+							在测试类上通过@Tag("标记名：如slow")注解加上标记, 便可以通过
+							下面的节点进行过滤。
+						-->
+						<!-- <includeTags>fast</includeTags> -->
+						<excludeTags>slow</excludeTags>
+						<!--
+						<configurationParameters>
+							junit.jupiter.conditions.deactivate = *
+						</configurationParameters>
+						-->
+					</properties>
+				</configuration>
+				<!-- surefire依赖的jar -->
+				<dependencies>
+					<dependency>
+						<groupId>org.junit.platform</groupId>
+						<artifactId>junit-platform-surefire-provider</artifactId>
+						<version>${junit.platform.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<!-- 测试report插件，可以将surefire生成的xml测试结果转换成Html格式 -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+				<!-- 执行列表 -->
+					<execution>
+						<id>prepare-agent</id>
+						<!-- 准备代理 -->
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<!-- 准备打包时执行 -->
+						<phase>prepare-package</phase>
+						<!-- 执行内容：生成报告 -->
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-unit-test</id>
+						<!-- 测试时执行 -->
+						<phase>test</phase>
+						<goals>
+							<!-- 执行内容：生成报告 -->
+							<goal>report</goal>
+						</goals>
+						<!-- 为test阶段生成的报告进行的局部配置 -->
+						<configuration>
+							<!-- 生成测试报告的相关配置,
+								详细：https://www.jacoco.org/jacoco/trunk/doc/report-mojo.html
+							-->
+							<!-- 带有执行数据的文件, 其默认目录也是这个值 -->
+							<dataFile>target/jacoco.exec</dataFile>
+							<!-- 测试报告生成的目录 -->
+							<outputDirectory>target/jacoco-ut</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+				<!-- 为jacoco进行的整体配置 -->
+				<configuration>
+					<!-- 执行后报告输出的目录,全局。 -->
+					<systemPropertyVariables>
+						<jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
+					</systemPropertyVariables>
+					<!-- 排除对以下文件生成的测试报告 -->
+					<excludes>
+						<exclude>**/beans/**/*</exclude>
+						<exclude>**/carrent/common/*</exclude>
+						<exclude>**/config/*</exclude>
+						<exclude>**/controller/*</exclude>
+						<exclude>**/enums/*</exclude>
+						<exclude>**/exception/*</exclude>
+						<exclude>**/*MapperImpl.class</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
+			<!-- 通过cargo插件,内置tomcat,并进行后续的自动部署等.. -->
+			<plugin>
+				<!-- cargo插件的引入。 -->
+				<groupId>org.codehaus.cargo</groupId>
+				<artifactId>cargo-maven2-plugin</artifactId>
+				<version>1.6.7</version>
+				<!-- 配置cargo插件 -->
+				<configuration>
+					<!-- 配置cargo插件内部要安装的tomcat -->
+					<container>
+						<containerId>tomcat8x</containerId>
+						<!-- 内置的tomcat jar -->
+						<artifactInstaller>
+							<groupId>org.apache.tomcat</groupId>
+							<artifactId>tomcat</artifactId>
+							<version>${tomcat.version}</version>
+						</artifactInstaller>
+					</container>
+					<configuration>
+						<!-- cargo 在web容器部署的方式。
+							1.standalone:代表,会在home的指定目录,将tomcat也就是web容器的一些配置生成,
+							并将web在该目录启动。
+							2.exsiting：代表,用户需要指定一个固定的web容器目录,让cargo在容器中对web项目进行操作。
+							https://www.cnblogs.com/forerver-elf/p/6253445.html 该链接有一定的解释。
+						-->
+						<type>standalone</type>
+						<!-- 由于是standalone部署方式,
+							因此,指定了下面的home中的目录,作为内置tomcat和web应用部署的目录
+						-->
+						<home>
+							${project.build.directory}/apache-tomcat-${tomcat.version}
+						</home>
+						<properties>
+							<!-- 容器所要占用的端口及日志输出的密度 -->
+							<cargo.servlet.port>8088</cargo.servlet.port>
+							<!-- 之前是high,但是由于日志输出太多,导致Tomcat部署超时,因此改成了low -->
+							<cargo.logging>low</cargo.logging>
+						</properties>
+
+							
+					</configuration>
+					<!-- 在使用cargo完成自动部署时的相关配置 -->
+					<deployables>
+						<deployable>
+							<!-- maven默认的工程groupId引用方式 -->
+							<!-- 要部署的项目的groupId -->
+							<groupId>${project.groupId}</groupId>
+							<!-- maven默认的工程artifactId引用方式 -->
+							<!-- 要部署的项目的artifactId -->
+							<artifactId>${project.artifactId}</artifactId>
+							<!-- 部署前打包的类型 -->
+							<type>war</type>
+							<properties>
+								<!-- 部署后web应用的名称 -->
+								<context>/graduation</context>
+							</properties>
+						</deployable>
+					</deployables>
+				</configuration>
+				
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
