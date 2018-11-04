@@ -1,5 +1,0 @@
-127.0.0.1 - - [04/Nov/2018:15:44:30 +0800] "GET /cargocpc/index.html HTTP/1.1" 200 124
-0:0:0:0:0:0:0:1 - - [04/Nov/2018:15:45:33 +0800] "POST /graduation/update HTTP/1.1" 200 25
-0:0:0:0:0:0:0:1 - - [04/Nov/2018:15:47:40 +0800] "POST /graduation/offline HTTP/1.1" 200 25
-0:0:0:0:0:0:0:1 - - [04/Nov/2018:15:48:44 +0800] "POST /graduation/getInformation HTTP/1.1" 200 79
-0:0:0:0:0:0:0:1 - - [04/Nov/2018:15:49:20 +0800] "POST /graduation/login HTTP/1.1" 200 39
